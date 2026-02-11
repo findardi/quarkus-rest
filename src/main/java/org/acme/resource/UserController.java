@@ -10,6 +10,8 @@ import org.acme.service.UserService.login;
 import org.acme.service.UserService.registerResponse;
 import org.acme.service.UserService.userList;
 
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -53,4 +55,14 @@ public class UserController {
         ApiResponse<login> response = ApiResponse.ok("login successfully", result);
         return Response.status(200).entity(response).build();
     }
+
+    @GET
+    @RolesAllowed({"ADMIN"})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response test() {
+        StatusResponse response = new StatusResponse("ok");
+        return Response.status(200).entity(response).build();
+    }
+
+    public record StatusResponse(String status) {}
 }

@@ -2,6 +2,9 @@ package org.acme.utils;
 
 import org.acme.exception.UnauthorizedException;
 
+import io.quarkus.security.AuthenticationFailedException;
+import io.quarkus.security.ForbiddenException;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;
@@ -72,6 +75,54 @@ public class GlobalExceptionMapper {
             );
             
             return Response.status(401).entity(error).build();
+        }
+    }
+    
+    @Provider
+    public static class AuthenticationFailedExceptionMapper 
+        implements ExceptionMapper<AuthenticationFailedException> {
+        
+        @Override
+        public Response toResponse(AuthenticationFailedException e) {
+            ErrorResponse error = new ErrorResponse(
+                401,
+                "Unauthorized: Invalid or missing authentication token",
+                time()
+            );
+            
+            return Response.status(401).entity(error).build();
+        }
+    }
+    
+    @Provider
+    public static class SecurityUnauthorizedExceptionMapper 
+        implements ExceptionMapper<io.quarkus.security.UnauthorizedException> {
+        
+        @Override
+        public Response toResponse(io.quarkus.security.UnauthorizedException e) {
+            ErrorResponse error = new ErrorResponse(
+                401,
+                "Unauthorized: Invalid or missing authentication token",
+                time()
+            );
+            
+            return Response.status(401).entity(error).build();
+        }
+    }
+    
+    @Provider
+    public static class ForbiddenExceptionMapper 
+        implements ExceptionMapper<ForbiddenException> {
+        
+        @Override
+        public Response toResponse(ForbiddenException e) {
+            ErrorResponse error = new ErrorResponse(
+                403,
+                "Forbidden: You don't have permission to access this resource",
+                time()
+            );
+            
+            return Response.status(403).entity(error).build();
         }
     }
     

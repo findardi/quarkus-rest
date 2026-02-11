@@ -21,5 +21,11 @@ public record UserRegister(
     
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    String password
-) {}
+    String password,
+
+    String role
+) {
+    public String getRoleOrDefault() {
+        return (role == null || role.isBlank()) ? "USER" : role;
+    }
+}

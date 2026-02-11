@@ -6,9 +6,13 @@ import java.util.Optional;
 
 import org.acme.dto.UserLogin;
 import org.acme.dto.UserRegister;
+import org.acme.entity.RoleEntity;
 import org.acme.entity.UserEntity;
+import org.acme.entity.UserRoleEntity;
 import org.acme.exception.UnauthorizedException;
+import org.acme.repository.RoleRepository;
 import org.acme.repository.UserRepository;
+import org.acme.utils.JWTHandle;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,6 +23,12 @@ import jakarta.transaction.Transactional;
 public class UserService {
     @Inject
     UserRepository ur;
+
+    @Inject
+    RoleRepository rr;
+
+    @Inject
+    JWTHandle jwt;
 
     public record registerResponse(
         String username,
@@ -46,6 +56,18 @@ public class UserService {
         newUser.password = BcryptUtil.bcryptHash(req.password());
 
         UserEntity result = ur.save(newUser);
+        
+        String roleName = req.getRoleOrDefault();
+        Optional<RoleEntity> roleOpt = rr.findByName(roleName);
+        
+        if (roleOpt.isPresent()) {
+            UserRoleEntity userRole = new UserRoleEntity();
+            userRole.userId = result.id;
+            userRole.roleId = roleOpt.get().id;
+            userRole.createdBy = req.username();
+            rr.save(userRole);
+        }
+        
         return new registerResponse(result.username, result.email);
     }
 
@@ -77,6 +99,6 @@ public class UserService {
             throw new UnauthorizedException("invalid credentials");
         }
 
-        return new login("test", "test2");
+        return new login(jwt.generateToken(user), jwt.generateRefreshToken(user));
     }
 }
