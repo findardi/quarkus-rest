@@ -7,10 +7,11 @@ import org.acme.dto.UserLogin;
 import org.acme.dto.UserRegister;
 import org.acme.service.UserService;
 import org.acme.service.UserService.login;
+import org.acme.service.UserService.profile;
 import org.acme.service.UserService.registerResponse;
 import org.acme.service.UserService.userList;
 
-import jakarta.annotation.security.PermitAll;
+import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -19,8 +20,10 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 
 @Path("/user")
 public class UserController {
@@ -39,6 +42,7 @@ public class UserController {
 
     @GET
     @Path("/all")
+    @RolesAllowed({"ADMIN"})
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUsers() {
         List<userList> result = us.getAll();
@@ -57,10 +61,15 @@ public class UserController {
     }
 
     @GET
-    @RolesAllowed({"ADMIN"})
+    @Path("/profile")
+    @Authenticated
     @Produces(MediaType.APPLICATION_JSON)
-    public Response test() {
-        StatusResponse response = new StatusResponse("ok");
+    public Response getProfile(@Context SecurityContext ctx) {
+        // Get username from SecurityContext
+        String username = ctx.getUserPrincipal().getName();
+
+        profile profile = us.profile(username);
+        ApiResponse<profile> response = ApiResponse.ok("get profile successfully", profile);
         return Response.status(200).entity(response).build();
     }
 

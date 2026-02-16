@@ -1,8 +1,12 @@
 package org.acme.service;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.acme.dto.UserLogin;
 import org.acme.dto.UserRegister;
@@ -44,6 +48,16 @@ public class UserService {
     public record login(
         String token,
         String refreshToken
+    ) {}
+
+    public record profile(
+        Long id,
+        String fullname,
+        String username,
+        String email,
+        Set<String> roles,
+        OffsetDateTime createdAt,
+        OffsetDateTime modifiedAt
     ) {}
 
     @Transactional
@@ -100,5 +114,26 @@ public class UserService {
         }
 
         return new login(jwt.generateToken(user), jwt.generateRefreshToken(user));
+    }
+
+    public profile profile(String username) {
+        Optional<UserEntity> userOpt = ur.findByUsername(username);
+
+        UserEntity user = userOpt.get();
+        List<RoleEntity> userRoles = rr.getRolesByUser(user.id);
+
+        Set<String> roles = userRoles.stream()
+            .map(role -> role.name)
+            .collect(Collectors.toSet());
+
+        return new profile(
+            user.id, 
+            user.fullname, 
+            user.username, 
+            user.email, 
+            roles, 
+            user.createdAt, 
+            user.modifiedAt
+        );
     }
 }
